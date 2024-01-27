@@ -1,0 +1,10 @@
+name: "🙋🏻 질문"
+description: "프로젝트에 관련하여 생긴 질문을 이슈로 남겨보세요."
+labels: "🙋🏻 질문"
+body:
+  - type: textarea
+    attributes:
+      label: ❓궁금해요
+      description: 질문을 입력해 주세요.
+    validations:
+      required: true

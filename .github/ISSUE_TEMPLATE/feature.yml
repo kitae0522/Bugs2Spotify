@@ -1,0 +1,22 @@
+name: "❇️ 새로운 기능"
+description: "새로운 기능에 관하여 이슈를 남겨보세요."
+labels: "️️❇️ 새로운 기능"
+body:
+  - type: textarea
+    attributes:
+      label: ❇️ 개요
+      description: 새로운 기능에 관한 설명을 꼼꼼하게 작성해 주세요!
+      placeholder:
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 🔨 해야 할 일
+      description: 해야 할 일을 작성해 주세요!
+      placeholder: ◻︎ Something ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 🙋🏻 덧붙일 말
+      description: 더 하고 싶은 말이 있다면 작성해 주세요!
