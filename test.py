@@ -57,9 +57,8 @@ def run(source_playlist_id: str):
                     raise Exception(append_msg)
 
             print('✅ Enjoy :)')
-
     except Exception as err:
-        print(err)
+        pass
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
-import datetime
 import json
 import base64
+import random
+import datetime
 from typing import List
 
 import spotipy
@@ -72,16 +73,18 @@ class SpotifyInfo:
         self.CLIENT_SECRET = config.get('client_secret', None)
         self.REDIRECT_URI = config.get('redirect_uri', None)
         self.USER_ID = config.get('user_id', None)
+        self.USER_NAME = config.get('user_name', None)
 
     def __iter__(self):
         yield self.CLIENT_ID
         yield self.CLIENT_SECRET
         yield self.REDIRECT_URI
         yield self.USER_ID
+        yield self.USER_NAME
 
 
 class SpotifyApp:
-    def __init__(self, api_info):
+    def __init__(self, api_info: SpotifyInfo):
         self.utils = Utils()
         self.scope = ('playlist-modify-public', 'ugc-image-upload')
         self.SPOTIFY_API_INFO = api_info
@@ -90,6 +93,48 @@ class SpotifyApp:
                                           client_secret=self.SPOTIFY_API_INFO.CLIENT_SECRET,
                                           redirect_uri=self.SPOTIFY_API_INFO.REDIRECT_URI)
         self.parent = spotipy.Spotify(auth_manager=self.SPOTIFY_OAUTH)
+        print(self._get_user_info().message)
+
+    def _get_user_info(self) -> ReturnClassWithResult:
+        if self.SPOTIFY_API_INFO.USER_ID and self.SPOTIFY_API_INFO.USER_NAME:
+            return self._get_cached_user_info()
+        try:
+            user_info = self.parent.me()
+            return_user_info = ReturnClassWithResult(_is_error=False,
+                                                     _message='✅ 외부에서 사용자 ID를 받아오는 데 성공했습니다.',
+                                                     _result={'user_id': user_info['id'],
+                                                              'user_name': user_info['display_name']})
+            self._set_user_info(return_user_info)
+            return return_user_info
+        except Exception as err:
+            return_user_info = ReturnClassWithResult(_is_error=True,
+                                                     _message=f'❌ 외부에서 사용자 ID를 받아오는 데 실패했습니다.\n{err}',
+                                                     _result={'user_id': None, 'user_name': None})
+            self._set_user_info(return_user_info)
+            return return_user_info
+
+    def _get_cached_user_info(self) -> ReturnClassWithResult:
+        return ReturnClassWithResult(_is_error=False,
+                                     _message='✅ 캐시된 파일에서 사용자 ID를 받아오는 데 성공했습니다.',
+                                     _result={'user_id': self.SPOTIFY_API_INFO.USER_ID,
+                                              'user_name': self.SPOTIFY_API_INFO.USER_NAME})
+
+    def _set_user_info(self, user_info: ReturnClassWithResult):
+        get_user_info_err, get_user_info_msg, get_user_info_result = user_info
+        self.SPOTIFY_API_INFO.USER_ID = get_user_info_result['user_id']
+        self.SPOTIFY_API_INFO.USER_NAME = get_user_info_result['user_name']
+        self._save_user_info()
+
+    def _save_user_info(self):
+        with open('config.json', 'w') as config_file:
+            config_json = {
+                'client_id': self.SPOTIFY_API_INFO.CLIENT_ID,
+                'client_secret': self.SPOTIFY_API_INFO.CLIENT_SECRET,
+                'redirect_uri': self.SPOTIFY_API_INFO.REDIRECT_URI,
+                'user_id': self.SPOTIFY_API_INFO.USER_ID,
+                'user_name': self.SPOTIFY_API_INFO.USER_NAME
+            }
+            json.dump(config_json, config_file, indent=2)
 
     def search(self, track: str, artist: str) -> ReturnClassWithResult:
         search_query = (track, artist)  # Priority Setting
@@ -108,7 +153,7 @@ class SpotifyApp:
 
     def create_playlist(self, playlist_name: str, description: str) -> ReturnClassWithResult:
         default_description = datetime.datetime.now().strftime('(%Y-%m-%d)')
-        final_description = self.utils.string_inject((description, default_description), ' ')
+        final_description = self.utils.string_inject((description, default_description))
         try:
             make_new_playlist = self.parent.user_playlist_create(user=self.SPOTIFY_API_INFO.USER_ID,
                                                                  name=playlist_name,
@@ -117,7 +162,6 @@ class SpotifyApp:
                                                                  description=final_description)
             return ReturnClassWithResult(_is_error=False, _message='✅ 플레이리스트를 만들었습니다.', _result=make_new_playlist['id'])
         except Exception as err:
-            print(err)
             return ReturnClassWithResult(_is_error=True, _message='❌ 플레이리스트를 만들지 못했습니다.', _result=None)
 
     def append_items(self, playlist_id: str, track_items: List[TrackInfo]) -> ReturnClass:
@@ -128,20 +172,20 @@ class SpotifyApp:
                                            position=None)
             return ReturnClass(_is_error=False, _message='✅ 트랙을 추가했습니다.')
         except Exception as err:
-            return ReturnClass(_is_error=True, _message=f'❌ 트랙을 추가하지 못했습니다.\n'
-                                                        f'{err}')
+            return ReturnClass(_is_error=True, _message=f'❌ 트랙을 추가하지 못했습니다.\n{err}')
 
     def upload_playlist_thumbnail(self, playlist_id: str) -> ReturnClass:
+        thumbnail_img_number = random.randint(1, 3)
         # load thumbnail_img
-        thumbnail_img_url = 'https://raw.githubusercontent.com/kitae0522/Bugs2Spotify/main/playlist-thumbnail.jpeg'
+        thumbnail_img_url = f'https://raw.githubusercontent.com/kitae0522/Bugs2Spotify/main/img/' \
+                            f'playlist-thumbnail-{thumbnail_img_number}.jpeg'
         thumbnail_img_b64 = base64.b64encode(requests.get(thumbnail_img_url).content).decode('utf-8')
 
         try:
             self.parent.playlist_upload_cover_image(playlist_id=playlist_id, image_b64=thumbnail_img_b64)
             return ReturnClass(_is_error=False, _message='✅ 플레이리스트 커버 사진을 업로드 했습니다.')
         except Exception as err:
-            return ReturnClass(_is_error=True, _message=f'❌ 플레이리스트 커버 사진을 업로드하지 못했습니다.\n'
-                                                        f'{err}')
+            return ReturnClass(_is_error=True, _message=f'❌ 플레이리스트 커버 사진을 업로드하지 못했습니다.\n{err}')
 
 
 class BugsApp:
@@ -187,11 +231,9 @@ class BugsApp:
                                              _result=playlist_result)
         except requests.RequestException as err:
             return ReturnClassWithResult(_is_error=True,
-                                         _message=f'❌ 요청 도중 문제가 발생했습니다.\n'
-                                                  f'{err}',
+                                         _message=f'❌ 요청 도중 문제가 발생했습니다.\n{err}',
                                          _result=None)
         except Exception as err:
             return ReturnClassWithResult(_is_error=True,
-                                         _message=f'❌ 예상치 못한 에러가 발생했습니다.\n'
-                                                  f'{err}',
+                                         _message=f'❌ 예상치 못한 에러가 발생했습니다.\n{err}',
                                          _result=None)
