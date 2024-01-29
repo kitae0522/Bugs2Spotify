@@ -2,10 +2,10 @@ import json
 import datetime
 from urllib.parse import urlparse
 
-from module import SpotifyApp
-from module import SpotifyInfo
-from module import TrackInfoUtils
-from module import BugsApp
+from core.module import SpotifyApp
+from core.module import SpotifyInfo
+from core.module import TrackInfoUtils
+from core.module import BugsApp
 
 
 def run(source_playlist_id: str):
