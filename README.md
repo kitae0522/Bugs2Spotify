@@ -17,6 +17,8 @@
 ## 결과물
 
 [![데모 영상](https://img.youtube.com/vi/sDRBQ_NufKY/maxresdefault.jpg)](https://youtu.be/sDRBQ_NufKY "Bugs2Spotify")
+[클릭](https://youtu.be/sDRBQ_NufKY)하시면 데모 영상을 시청하실 수 있습니다.
+
 
 ![Result Image](https://raw.githubusercontent.com/kitae0522/Bugs2Spotify/main/docs/result.png)
 이 프로젝트로 만들어진 플레이리스트는 [여기](https://open.spotify.com/user/ox51v4ufh85178td59zicrmue/playlists)서 확인할 수 있습니다.
