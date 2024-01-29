@@ -35,11 +35,11 @@ class TrackInfoUtils:
         return TrackInfo(track_id, track_title, track_artist)
 
     @staticmethod
-    def get_convert_dict(track_info):
+    def get_convert_dict(track_info: TrackInfo):
         _track_id, _track_title, _track_artist = track_info
         return {'id': _track_id, 'title': _track_title, 'artist': _track_artist}
 
-    def get_convert_track_info(self, track_info_dict):
+    def get_convert_track_info(self, track_info_dict: dict):
         _track_id = track_info_dict.get('id', None)
         _track_title = track_info_dict.get('title', None)
         _track_artist = track_info_dict.get('artist', None)
@@ -162,7 +162,7 @@ class SpotifyApp:
                                                                  description=final_description)
             return ReturnClassWithResult(_is_error=False, _message='✅ 플레이리스트를 만들었습니다.', _result=make_new_playlist['id'])
         except Exception as err:
-            return ReturnClassWithResult(_is_error=True, _message='❌ 플레이리스트를 만들지 못했습니다.', _result=None)
+            return ReturnClassWithResult(_is_error=True, _message=f'❌ 플레이리스트를 만들지 못했습니다.\n{err}', _result=None)
 
     def append_items(self, playlist_id: str, track_items: List[TrackInfo]) -> ReturnClass:
         track_id_items = [track_item.id for track_item in track_items]
